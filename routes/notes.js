@@ -37,87 +37,85 @@ router.get('/', (req, res, next) => {
 router.get('/:id', (req, res, next) => {
   const id = req.params.id;
 
-  notes.find(id)
-    .then(item => {
-      if (item) {
-        res.json(item);
-      } else {
-        next();
+  knex
+    .select('notes.id', 'title', 'content')
+    .from('notes')
+    .modify(queryBuilder => {
+      if (id) {
+        queryBuilder.where('notes.id', '=', `${id}`);
       }
+    })
+    .orderBy('notes.id')
+    .then(([results]) => {
+      //console.log(JSON.stringify(results, null, 2));
+      res.json(results);      
     })
     .catch(err => {
       next(err);
     });
 });
 
-// // Put update an item
-// router.put('/:id', (req, res, next) => {
-//   const id = req.params.id;
+// Put update an item
+router.put('/:id', (req, res, next) => {
+  const id = req.params.id;
 
-//   /***** Never trust users - validate input *****/
-//   const updateObj = {};
-//   const updateableFields = ['title', 'content'];
+  /***** Never trust users - validate input *****/
+  const updateObj = {};
+  const updateableFields = ['title', 'content'];
 
-//   updateableFields.forEach(field => {
-//     if (field in req.body) {
-//       updateObj[field] = req.body[field];
-//     }
-//   });
+  updateableFields.forEach(field => {
+    if (field in req.body) {
+      updateObj[field] = req.body[field];
+    }
+  });
 
-//   /***** Never trust users - validate input *****/
-//   if (!updateObj.title) {
-//     const err = new Error('Missing `title` in request body');
-//     err.status = 400;
-//     return next(err);
-//   }
+  /***** Never trust users - validate input *****/
+  if (!updateObj.title) {
+    const err = new Error('Missing `title` in request body');
+    err.status = 400;
+    return next(err);
+  }
 
-//   notes.update(id, updateObj)
-//     .then(item => {
-//       if (item) {
-//         res.json(item);
-//       } else {
-//         next();
-//       }
-//     })
-//     .catch(err => {
-//       next(err);
-//     });
-// });
+  knex('notes')
+    .where({'notes.id': `${id}`})
+    .update({title:updateObj.title,content: updateObj.content})  
+    .returning(['notes.id','title','content'])
+    .then(([results]) => res.json(results))
+    .catch(err => {
+      next(err);
+    });
+});
 
-// // Post (insert) an item
-// router.post('/', (req, res, next) => {
-//   const { title, content } = req.body;
+// Post (insert) an item
+router.post('/', (req, res, next) => {
+  const { title, content } = req.body;
 
-//   const newItem = { title, content };
-//   /***** Never trust users - validate input *****/
-//   if (!newItem.title) {
-//     const err = new Error('Missing `title` in request body');
-//     err.status = 400;
-//     return next(err);
-//   }
+  const newItem = { title, content };
+  /***** Never trust users - validate input *****/
+  if (!newItem.title) {
+    const err = new Error('Missing `title` in request body');
+    err.status = 400;
+    return next(err);
+  }
 
-//   notes.create(newItem)
-//     .then(item => {
-//       if (item) {
-//         res.location(`http://${req.headers.host}/notes/${item.id}`).status(201).json(item);
-//       }
-//     })
-//     .catch(err => {
-//       next(err);
-//     });
-// });
+  knex('notes')
+    .insert({title: newItem.title,
+      content: newItem.content})
+    .debug(true)
+    .returning(['id','title','content'])
+    .then(([results]) => res.location(`http://${req.headers.host}/notes/${results.id}`).status(201).json(results))
+    .catch(err => next(err));
+});
 
-// // Delete an item
-// router.delete('/:id', (req, res, next) => {
-//   const id = req.params.id;
+// Delete an item
+router.delete('/:id', (req, res, next) => {
+  const id = req.params.id;
 
-//   notes.delete(id)
-//     .then(() => {
-//       res.sendStatus(204);
-//     })
-//     .catch(err => {
-//       next(err);
-//     });
-// });
+  knex('notes')
+    .where({'notes.id':`${id}`})
+    .del()
+    .then(() => res.sendStatus(204))
+    .catch(err => next(err)); 
+});
 
 module.exports = router;
