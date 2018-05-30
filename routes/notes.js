@@ -31,34 +31,24 @@ router.get('/', (req, res, next) => {
       next(err);
     });
 });
-// router.get('/', (req, res, next) => {
-//   const { searchTerm } = req.query;
 
-//   notes.filter(searchTerm)
-//     .then(list => {
-//       res.json(list);
-//     })
-//     .catch(err => {
-//       next(err);
-//     });
-// });
 
-// // Get a single item
-// router.get('/:id', (req, res, next) => {
-//   const id = req.params.id;
+// Get a single item
+router.get('/:id', (req, res, next) => {
+  const id = req.params.id;
 
-//   notes.find(id)
-//     .then(item => {
-//       if (item) {
-//         res.json(item);
-//       } else {
-//         next();
-//       }
-//     })
-//     .catch(err => {
-//       next(err);
-//     });
-// });
+  notes.find(id)
+    .then(item => {
+      if (item) {
+        res.json(item);
+      } else {
+        next();
+      }
+    })
+    .catch(err => {
+      next(err);
+    });
+});
 
 // // Put update an item
 // router.put('/:id', (req, res, next) => {
