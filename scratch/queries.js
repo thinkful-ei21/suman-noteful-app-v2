@@ -18,3 +18,22 @@ knex
   .catch(err => {
     console.error(err);
   });
+
+let id = 1001;
+knex
+  .select('notes.id', 'title', 'content')
+  .from('notes')
+  .modify(queryBuilder => {
+    if (id) {
+      queryBuilder.where('notes.id', '=', `${id}`);
+    }
+  })
+  .orderBy('notes.id')
+  .then(results => {
+    console.log(JSON.stringify(results, null, 2));
+  })
+  .catch(err => {
+    console.error(err);
+  });
+
+let updateObj ={ title:'Suman tESTING uPDATE',content:'Testing update with knex query...........' };
